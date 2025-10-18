@@ -7,9 +7,9 @@ for n in nodes:
     m.add_node(n)
 
 nodes[0].transmit('Hello World'.encode())
+nodes[1].transmit('https://juststephen.com/'.encode(), frequency=2.401e9)
 
 i: int = 0
 while m.has_events_queued:
-    print(f'Time step {i}')
     m.step(1e-8)
     i += 1

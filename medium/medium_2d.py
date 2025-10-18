@@ -1,8 +1,7 @@
 import numpy as np
 from scipy.spatial import KDTree
-from typing import Optional
 
-from .medium import Node, Medium
+from .medium import Node, Medium, Reception
 
 class Node2D(Node):
     """
@@ -45,7 +44,7 @@ class Medium2D(Medium[Node2D]):
         """
         super().__init__()
         self.nodes: list[Node2D] = []
-        self._tree: Optional[KDTree] = None
+        self._tree: KDTree | None = None
 
     def add_node(self, node: Node2D) -> None:
         """
@@ -72,6 +71,8 @@ class Medium2D(Medium[Node2D]):
         self,
         sender: Node2D,
         data: bytes,
+        bitrate: float,
+        frequency: float,
         tx_power_dbm: float
     ) -> None:
         """
@@ -83,6 +84,10 @@ class Medium2D(Medium[Node2D]):
             Sending node.
         data : bytes
             Sent bytes.
+        bitrate : float
+            The bitrate for the data transmission.
+        frequency : float
+            Transmission frequency.
         tx_power_dbm : float
             Transmission power.
         """
@@ -91,9 +96,14 @@ class Medium2D(Medium[Node2D]):
             return
 
         # Query potential receivers near the sender
-        indices: list[int] = self._tree.query_ball_point(sender.pos, self.search_radius)
+        indices: list[int] = self._tree.query_ball_point(
+            sender.pos,
+            self.search_radius
+        )
         # Select receivers, excluding the sender
-        receivers = [self.nodes[i] for i in indices if self.nodes[i] is not sender]
+        receivers = [
+            self.nodes[i] for i in indices if self.nodes[i] is not sender
+        ]
         if not receivers:
             return
 
@@ -112,15 +122,28 @@ class Medium2D(Medium[Node2D]):
         fading = np.random.normal(0, self.fading_std, size=distances.shape)
 
         # Multipath factor (Rayleigh fading)
-        multipath_factor = 20 * np.log10(np.random.rayleigh(1.0, size=distances.shape))
+        multipath_factor = 20 * np.log10(
+            np.random.rayleigh(1.0, size=distances.shape)
+        )
 
         # Compute final power at receivers
         rx_power = tx_power_dbm - path_loss + fading + multipath_factor * 0.1
 
-        # Compute propagation delays
+        # Compute propagation delays and airtime
         delays = distances / self.light_speed
+        airtime: float = len(data) * 8 / bitrate
+        event_time = delays + airtime
 
-        # Deliver data to receivers above sensitivity threshold
-        for rx, power, delay in zip(receivers, rx_power, delays):
-            if power >= self.sensitivity_dbm:
-                self.schedule(delay, rx.receive, data, power)
+        # Transmission start and end time for colission detection
+        receiving_start = self.time + delays
+        receiving_end = receiving_start + airtime
+
+        # Deliver data to receivers using events
+        for rx, time, start, end, power in zip(
+            receivers, event_time, receiving_start, receiving_end, rx_power
+        ):
+            if power < self.sensitivity_dbm:
+                continue
+            reception = Reception(rx, start, end, data, frequency, power)
+            self.schedule(time, self._complete_receive, reception)
+            self._active_receptions[rx.id].append(reception)
