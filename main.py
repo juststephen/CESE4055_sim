@@ -1,7 +1,7 @@
 import numpy as np
-from medium import Node2D, Medium2D
+from medium import Medium, Node2D
 
-m = Medium2D()
+m = Medium[Node2D]()
 nodes = [Node2D(*np.random.uniform(-50, 50, size=2)) for _ in range(16)]
 for n in nodes:
     m.add_node(n)

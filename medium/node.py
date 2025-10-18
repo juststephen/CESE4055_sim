@@ -1,0 +1,116 @@
+from abc import ABC, abstractmethod
+from typing import Generic, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .medium import Medium
+
+from .typing import M
+
+class Node(ABC, Generic[M]):
+    """
+    Node base class.
+    """
+    _next_id: int = 0
+
+    @abstractmethod
+    def __init__(self) -> None:
+        """
+        Initialise node object.
+        """
+        self.id = Node._next_id
+        Node._next_id += 1
+
+        self.medium: M | None = None
+
+    @property
+    @abstractmethod
+    def pos(self) -> tuple[float, ...]:
+        """
+        Get the position of the node.
+
+        Returns
+        -------
+        tuple[float, ...]
+            Coordinates.
+        """
+        ...
+
+    def receive(
+        self,
+        data: bytes,
+        frequency: float,
+        rx_power_dbm: float
+    ) -> None:
+        """
+        Process received data.
+
+        Parameters
+        ----------
+        data : bytes
+            Receiving bytes.
+        frequency : float
+            Frequency received.
+        rx_power_dbm : float
+            Received power.
+        """
+        print(
+            f'Node {self.id} received {data} at '
+            f'{rx_power_dbm:.2f} [dBm] at {frequency:.3e} [Hz]'
+        )
+
+    def transmit(
+        self,
+        data: bytes,
+        *,
+        bitrate: float = 1e6,
+        frequency: float = 2.4e9,
+        tx_power_dbm: float = 20.0
+    ) -> None:
+        """
+        Transmit data.
+
+        Parameters
+        ----------
+        data : bytes
+            Bytes to send.
+        bitrate : float, default: 1e6
+            The bitrate for the data transmission, by default 1 [Mb/s].
+        frequency : float, default: 2.4e9
+            Transmission frequency.
+        tx_power_dbm : float
+            Transmission power.
+        """
+        if not self.medium:
+            raise RuntimeError('Node is not part of a medium.')
+        self.medium.propagate(self, data, bitrate, frequency, tx_power_dbm)
+
+class Node2D(Node['Medium[Node2D]']):
+    """
+    Two dimensional node class.
+    """
+    def __init__(self, x: float, y: float) -> None:
+        """
+        Initialise node object.
+
+        Parameters
+        ----------
+        x : float
+            X coordinate.
+        y : float
+            Y coordinate.
+        """
+        super().__init__()
+        self.x = x
+        self.y = y
+
+    @property
+    def pos(self) -> tuple[float, float]:
+        """
+        Get the position of the node.
+
+        Returns
+        -------
+        tuple[float, float]
+            X and Y coordinate.
+        """
+        return (self.x, self.y)

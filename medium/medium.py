@@ -1,13 +1,13 @@
-from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 import heapq
 import numpy as np
 from numpy.typing import NDArray
-from typing import Any, Generic, TypeVar
+from scipy.spatial import KDTree
+from typing import Any, Generic
 
-N = TypeVar('N', bound='Node')
+from .typing import N
 
 @dataclass(order=True)
 class Event:
@@ -27,11 +27,11 @@ class Event:
     )
 
 @dataclass
-class Reception:
+class Reception(Generic[N]):
     """
     Reception data class.
     """
-    node: 'Node'
+    node: N
     start_time: float
     end_time: float
     data: bytes
@@ -48,72 +48,7 @@ class Reception:
             self.power_dbm
         )
 
-class Node(ABC):
-    """
-    Node base class.
-    """
-    _next_id: int = 0
-
-    @abstractmethod
-    def __init__(self) -> None:
-        """
-        Initialise node object.
-        """
-        self.id = Node._next_id
-        Node._next_id += 1
-
-        self.medium: Medium[N] | None = None
-
-    def receive(
-        self,
-        data: bytes,
-        frequency: float,
-        rx_power_dbm: float
-    ) -> None:
-        """
-        Process received data.
-
-        Parameters
-        ----------
-        data : bytes
-            Receiving bytes.
-        frequency : float
-            Frequency received.
-        rx_power_dbm : float
-            Received power.
-        """
-        print(
-            f'Node {self.id} received {data} at '
-            f'{rx_power_dbm:.2f} [dBm] at {frequency:.3e} [Hz]'
-        )
-
-    def transmit(
-        self,
-        data: bytes,
-        *,
-        bitrate: float = 1e6,
-        frequency: float = 2.4e9,
-        tx_power_dbm: float = 20.0
-    ) -> None:
-        """
-        Transmit data.
-
-        Parameters
-        ----------
-        data : bytes
-            Bytes to send.
-        bitrate : float, default: 1e6
-            The bitrate for the data transmission, by default 1 [Mb/s].
-        frequency : float, default: 2.4e9
-            Transmission frequency.
-        tx_power_dbm : float
-            Transmission power.
-        """
-        if not self.medium:
-            raise RuntimeError('Node is not part of a medium.')
-        self.medium.propagate(self, data, bitrate, frequency, tx_power_dbm)
-
-class Medium(ABC, Generic[N]):
+class Medium(Generic[N]):
     """
     Simulation medium base class.
     """
@@ -123,12 +58,15 @@ class Medium(ABC, Generic[N]):
         """
         Initialise medium object.
         """
+        self.nodes: list[N] = []
+        self._tree: KDTree | None = None
+
         # Time and events
         self.time: float = 0.0
         self._events: list[Event] = []
 
         # Active receptions at receivers, keys are node ID
-        self._active_receptions: dict[int, list[Reception]] = defaultdict(list)
+        self._active_receptions: dict[int, list[Reception[N]]] = defaultdict(list)
 
         # Propogation parameters
         self.path_loss_exp: float = 2
@@ -141,7 +79,27 @@ class Medium(ABC, Generic[N]):
         self.noise_floor_dbm: float = -100
         self.sinr_threshold_db: float = 10
 
-    @abstractmethod
+    def add_node(self, node: N) -> None:
+        """
+        Add a node to the medium.
+
+        Parameters
+        ----------
+        node : N
+            Node to add.
+        """
+        node.medium = self
+        self.nodes.append(node)
+        # Invalidate tree
+        self._tree = None
+
+    def _ensure_tree(self):
+        """
+        Ensure a tree exists, otherwise generate it.
+        """
+        if self._tree is None and self.nodes:
+            self._tree = KDTree([n.pos for n in self.nodes])
+
     def propagate(
         self,
         sender: N,
@@ -166,7 +124,62 @@ class Medium(ABC, Generic[N]):
         tx_power_dbm : float
             Transmission power.
         """
-        ...
+        self._ensure_tree()
+        if not self._tree:
+            return
+
+        # Query potential receivers near the sender
+        indices: list[int] = self._tree.query_ball_point(
+            sender.pos,
+            self.search_radius
+        )
+        # Select receivers, excluding the sender
+        receivers = [
+            self.nodes[i] for i in indices if self.nodes[i] is not sender
+        ]
+        if not receivers:
+            return
+
+        # Get positions of receivers
+        rx_positions = np.array([rx.pos for rx in receivers])
+
+        # Compute distances
+        diffs = rx_positions - np.array(sender.pos)
+        distances = np.linalg.norm(diffs, axis=1)
+
+        # Prevent extremely short distances by clipping them to a minimum
+        np.clip(distances, 1e-6, None, distances)
+
+        # Path loss and fading
+        path_loss = 10 * self.path_loss_exp * np.log10(distances)
+        fading = np.random.normal(0, self.fading_std, size=distances.shape)
+
+        # Multipath factor (Rayleigh fading)
+        multipath_factor = 20 * np.log10(
+            np.random.rayleigh(1.0, size=distances.shape)
+        )
+
+        # Compute final power at receivers
+        rx_power = tx_power_dbm - path_loss + fading + multipath_factor * 0.1
+
+        # Compute propagation delays and airtime
+        delays = distances / self.light_speed
+        airtime: float = len(data) * 8 / bitrate
+        event_time = delays + airtime
+
+        # Transmission start and end time for colission detection
+        receiving_start = self.time + delays
+        receiving_end = receiving_start + airtime
+
+        # Deliver data to receivers using events
+        for rx, time, start, end, power in zip(
+            receivers, event_time, receiving_start, receiving_end, rx_power
+        ):
+            if power < self.sensitivity_dbm:
+                continue
+            reception = Reception(rx, start, end, data, frequency, power)
+            self.schedule(time, self._complete_receive, reception)
+            self._active_receptions[rx.id].append(reception)
 
     def schedule(
         self,
@@ -264,7 +277,7 @@ class Medium(ABC, Generic[N]):
 
     def _complete_receive(
         self,
-        reception: Reception
+        reception: Reception[N]
     ) -> None:
         """
         Handle the completion of a receiving signal.
