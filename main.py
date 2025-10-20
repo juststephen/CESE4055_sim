@@ -1,15 +1,19 @@
 import numpy as np
+from PySide6.QtWidgets import QApplication
+import sys
+
 from medium import Medium, Node2D
+from ui import MainWindow
 
 m = Medium[Node2D]()
-nodes = [Node2D(*np.random.uniform(-50, 50, size=2)) for _ in range(16)]
+nodes = [Node2D(*np.random.uniform(-1e4, 1e4, size=2)) for _ in range(1048)]
 for n in nodes:
     m.add_node(n)
 
-nodes[0].transmit('Hello World'.encode())
-nodes[1].transmit('https://juststephen.com/'.encode(), frequency=2.401e9)
-
-i: int = 0
-while m.has_events_queued:
-    m.step(1e-8)
-    i += 1
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    window = MainWindow(m)
+    window.show()
+    window.activateWindow()
+    window.raise_()
+    sys.exit(app.exec())

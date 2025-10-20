@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from enum import Enum
 from typing import Generic, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -6,13 +7,18 @@ if TYPE_CHECKING:
 
 from .typing import M
 
+class NodeStatus(Enum):
+    IDLE = 0
+    RECEIVING = 1
+    TRANSMITTING = 2
+    COLLIDING = 3
+
 class Node(ABC, Generic[M]):
     """
     Node base class.
     """
     _next_id: int = 0
 
-    @abstractmethod
     def __init__(self) -> None:
         """
         Initialise node object.
@@ -21,6 +27,8 @@ class Node(ABC, Generic[M]):
         Node._next_id += 1
 
         self.medium: M | None = None
+
+        self._status: NodeStatus = NodeStatus.IDLE
 
     @property
     @abstractmethod
@@ -34,6 +42,42 @@ class Node(ABC, Generic[M]):
             Coordinates.
         """
         ...
+
+    @property
+    def status(self) -> NodeStatus:
+        """
+        Node status getter.
+
+        Returns
+        -------
+        status : NodeStatus
+            Current status.
+        """
+        return self._status
+
+    @status.setter
+    def status(self, status: NodeStatus) -> None:
+        """
+        Node status setter.
+
+        Parameters
+        ----------
+        status : NodeStatus
+            Status to set.
+        """
+        match self._status:
+            case NodeStatus.IDLE:
+                self._status = status
+
+            case NodeStatus.RECEIVING if status == NodeStatus.RECEIVING:
+                self._status = NodeStatus.COLLIDING
+
+            case NodeStatus.RECEIVING:
+                    self._status = status
+
+            case NodeStatus.TRANSMITTING | NodeStatus.COLLIDING:
+                if status == NodeStatus.IDLE:
+                    self._status = NodeStatus.IDLE
 
     def receive(
         self,
@@ -53,10 +97,11 @@ class Node(ABC, Generic[M]):
         rx_power_dbm : float
             Received power.
         """
-        print(
-            f'Node {self.id} received {data} at '
-            f'{rx_power_dbm:.2f} [dBm] at {frequency:.3e} [Hz]'
-        )
+        self.status = NodeStatus.IDLE
+        # print(
+        #     f'Node {self.id} received {data} at '
+        #     f'{rx_power_dbm:.2f} [dBm] at {frequency:.3e} [Hz]'
+        # )
 
     def transmit(
         self,
@@ -82,6 +127,7 @@ class Node(ABC, Generic[M]):
         """
         if not self.medium:
             raise RuntimeError('Node is not part of a medium.')
+        self.status = NodeStatus.TRANSMITTING
         self.medium.propagate(self, data, bitrate, frequency, tx_power_dbm)
 
 class Node2D(Node['Medium[Node2D]']):

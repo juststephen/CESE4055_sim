@@ -3,10 +3,10 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 import heapq
 import numpy as np
-from numpy.typing import NDArray
 from scipy.spatial import KDTree
 from typing import Any, Generic
 
+from .node import NodeStatus
 from .typing import N
 
 @dataclass(order=True)
@@ -72,12 +72,12 @@ class Medium(Generic[N]):
         self.path_loss_exp: float = 2
         self.fading_std: float = 4
         self.sensitivity_dbm: float = -90
-        self.search_radius: float = 1e3 # [m]
+        self.search_radius: float = 1e5 # [m]
         self.light_speed: float = 299792458 # [m/s]
 
         # SINR parameters for colissions and noise
         self.noise_floor_dbm: float = -100
-        self.sinr_threshold_db: float = 10
+        self.sinr_threshold_db: float = 20
 
     def add_node(self, node: N) -> None:
         """
@@ -152,33 +152,50 @@ class Medium(Generic[N]):
 
         # Path loss and fading
         path_loss = 10 * self.path_loss_exp * np.log10(distances)
-        fading = np.random.normal(0, self.fading_std, size=distances.shape)
+        fading = np.random.normal(np.zeros(distances.shape), self.fading_std)
 
         # Multipath factor (Rayleigh fading)
         multipath_factor = 20 * np.log10(
-            np.random.rayleigh(1.0, size=distances.shape)
+            np.random.rayleigh(np.ones(distances.shape))
         )
 
         # Compute final power at receivers
         rx_power = tx_power_dbm - path_loss + fading + multipath_factor * 0.1
+        # Signal to noise ratio
+        rx_snr = rx_power - self.noise_floor_dbm
 
         # Compute propagation delays and airtime
         delays = distances / self.light_speed
         airtime: float = len(data) * 8 / bitrate
         event_time = delays + airtime
 
+        # Set transmitter to idle status after airtime
+        self.schedule(airtime, self._set_node_status, sender, NodeStatus.IDLE)
+
         # Transmission start and end time for colission detection
-        receiving_start = self.time + delays
-        receiving_end = receiving_start + airtime
+        start = self.time + delays
+        end = start + airtime
 
         # Deliver data to receivers using events
-        for rx, time, start, end, power in zip(
-            receivers, event_time, receiving_start, receiving_end, rx_power
-        ):
-            if power < self.sensitivity_dbm:
+        for i, rx in enumerate(receivers):
+            snr = rx_snr[i]
+            if snr < self.sinr_threshold_db:
                 continue
-            reception = Reception(rx, start, end, data, frequency, power)
-            self.schedule(time, self._complete_receive, reception)
+            reception = Reception(
+                rx,
+                start[i],
+                end[i],
+                data,
+                frequency,
+                rx_power[i]
+            )
+            self.schedule(
+                delays[i],
+                self._set_node_status,
+                rx,
+                NodeStatus.RECEIVING
+            )
+            self.schedule(event_time[i], self._complete_receive, reception)
             self._active_receptions[rx.id].append(reception)
 
     def schedule(
@@ -260,10 +277,7 @@ class Medium(Generic[N]):
             return signal_dbm - self.noise_floor_dbm
 
         # Convert to array
-        interferers_dbm_array: NDArray[np.float64] = np.asarray(
-            interferers_dbm,
-            dtype=np.float64
-        )
+        interferers_dbm_array = np.asarray(interferers_dbm)
 
         # Relative interference power
         rel_interference = np.sum(
@@ -315,3 +329,18 @@ class Medium(Generic[N]):
         # The data is received if the SINR is above the threshold
         if sinr_db >= self.sinr_threshold_db:
             reception.receive()
+
+        # Set status to idle when this is the only ongoing reception
+        if all(r.end_time <= self.time for r in overlapping):
+            self._set_node_status(reception.node, NodeStatus.IDLE)
+
+    def _set_node_status(self, node: N, status: NodeStatus) -> None:
+        """
+        Set a node's status.
+
+        Parameters
+        ----------
+        status : NodeStatus
+            Status to set.
+        """
+        node.status = status
