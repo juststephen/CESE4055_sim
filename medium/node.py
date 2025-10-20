@@ -98,10 +98,10 @@ class Node(ABC, Generic[M]):
             Received power.
         """
         self.status = NodeStatus.IDLE
-        # print(
-        #     f'Node {self.id} received {data} at '
-        #     f'{rx_power_dbm:.2f} [dBm] at {frequency:.3e} [Hz]'
-        # )
+        print(
+            f'Node {self.id} received {data} at '
+            f'{rx_power_dbm:.2f} [dBm] at {frequency:.3e} [Hz]'
+        )
 
     def transmit(
         self,
