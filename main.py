@@ -2,12 +2,18 @@ import numpy as np
 from PySide6.QtWidgets import QApplication
 import sys
 
+from mac import MACAloha
 from medium import Medium, Node2D
 from ui import MainWindow
+from routing import RoutingNone
+
+np.random.seed(0)
 
 m = Medium[Node2D]()
-nodes = [Node2D(*np.random.uniform(-1e4, 1e4, size=2)) for _ in range(1048)]
-for n in nodes:
+nodes = []
+for _ in range(1048):
+    x, y = np.random.uniform(-1e4, 1e4, size=2)
+    n = Node2D(x, y, MACAloha, RoutingNone)
     m.add_node(n)
 
 if __name__ == '__main__':

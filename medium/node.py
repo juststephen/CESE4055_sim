@@ -1,11 +1,13 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from enum import Enum
-from typing import Generic, TYPE_CHECKING
+from typing import Any, Generic, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .medium import Medium
 
 from .typing import M
+from mac.typing import TMAC
+from routing.typing import TRouting
 
 class NodeStatus(Enum):
     IDLE = 0
@@ -13,20 +15,31 @@ class NodeStatus(Enum):
     TRANSMITTING = 2
     COLLIDING = 3
 
-class Node(ABC, Generic[M]):
+class Node(Generic[M, TMAC, TRouting]):
     """
     Node base class.
     """
     _next_id: int = 0
 
-    def __init__(self) -> None:
+    def __init__(self, mac: type[TMAC], routing: type[TRouting]) -> None:
         """
         Initialise node object.
+
+        Parameters
+        ----------
+        mac : type[TMAC]
+            MAC protocol.
+        routing : type[TRouting]
+            Routing protocol.
         """
-        self.id = Node._next_id
+        self.id: int = Node._next_id
         Node._next_id += 1
 
         self.medium: M | None = None
+        self.time: float = 0
+
+        self.mac = mac(self)
+        self.routing = routing(self)
 
         self._status: NodeStatus = NodeStatus.IDLE
 
@@ -79,6 +92,19 @@ class Node(ABC, Generic[M]):
                 if status == NodeStatus.IDLE:
                     self._status = NodeStatus.IDLE
 
+    def tick(self, time: float) -> None:
+        """
+        Tick method.
+
+        Parameters
+        ----------
+        time : float
+            Current time.
+        """
+        self.time = time
+        self.mac.tick(time)
+        self.routing.tick(time)
+
     def receive(
         self,
         data: bytes,
@@ -130,11 +156,17 @@ class Node(ABC, Generic[M]):
         self.status = NodeStatus.TRANSMITTING
         self.medium.propagate(self, data, bitrate, frequency, tx_power_dbm)
 
-class Node2D(Node['Medium[Node2D]']):
+class Node2D(Node['Medium[Node2D]', Any, Any]):
     """
     Two dimensional node class.
     """
-    def __init__(self, x: float, y: float) -> None:
+    def __init__(
+        self,
+        x: float,
+        y: float,
+        mac: type[TMAC],
+        routing: type[TRouting]
+    ) -> None:
         """
         Initialise node object.
 
@@ -144,8 +176,12 @@ class Node2D(Node['Medium[Node2D]']):
             X coordinate.
         y : float
             Y coordinate.
+        mac : type[TMAC], default MAC
+            MAC protocol.
+        routing : type[Routing], default Routing
+            Routing protocol.
         """
-        super().__init__()
+        super().__init__(mac, routing)
         self.x = x
         self.y = y
 

@@ -242,6 +242,10 @@ class Medium(Generic[N]):
             event.action(*event.args, **event.kwargs)
         self.time = end_time
 
+        # Tick every node
+        for n in self.nodes:
+            n.tick(self.time)
+
     @property
     def has_events_queued(self) -> bool:
         """
