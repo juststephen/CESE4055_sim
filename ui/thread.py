@@ -34,7 +34,7 @@ class SimulationThread(QThread):
             if not self.medium.has_events_queued:
                 i = np.random.randint(0, len(self.medium.nodes))
                 self.medium.nodes[i].transmit(f'test {i}'.encode(), bitrate=4e6)
-            if np.random.rand() < 1e-3:
+            if np.random.rand() < 1e-2:
                 i = np.random.randint(0, len(self.medium.nodes))
                 self.medium.nodes[i].transmit(f'rand {i}'.encode(), bitrate=8e6)
 
