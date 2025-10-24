@@ -2,6 +2,6 @@ from typing import TYPE_CHECKING, TypeVar
 
 if TYPE_CHECKING:
     from .base import Routing
-    from mac.base import MAC
+    from medium.node import Node
 
-TRouting = TypeVar('TRouting', bound='Routing[MAC]')
+TRouting = TypeVar('TRouting', bound='Routing[Node]')

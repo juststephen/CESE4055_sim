@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from collections import deque
 from enum import Enum
 from typing import Any, Generic, TYPE_CHECKING
 
@@ -35,10 +36,13 @@ class Node(Generic[M, TMAC, TRouting]):
         self.id: int = Node._next_id
         Node._next_id += 1
 
+        self._rx_buffer: deque[bytes] = deque(maxlen=8)
+
         self.medium: M | None = None
         self.time: float = 0
 
-        self.mac = mac(self, routing)
+        self.mac = mac(self)
+        self.routing = routing(self)
 
         self._status: NodeStatus = NodeStatus.IDLE
 
@@ -102,6 +106,19 @@ class Node(Generic[M, TMAC, TRouting]):
         """
         self.time = time
         self.mac.tick(time)
+        self.routing.tick(time)
+
+    def read_buffer(self) -> bytes | None:
+        """
+        Read potential bytes from the receive buffer.
+
+        Returns
+        -------
+        bytes | None
+            Potential bytes in the buffer.
+        """
+        if self._rx_buffer:
+            return self._rx_buffer.popleft()
 
     def receive(
         self,
@@ -122,7 +139,7 @@ class Node(Generic[M, TMAC, TRouting]):
             Received power.
         """
         self.status = NodeStatus.IDLE
-        self.mac.receive(data, frequency, rx_power_dbm)
+        self._rx_buffer.append(data)
         print(
             f'Node {self.id} received {data} at '
             f'{rx_power_dbm:.2f} [dBm] at {frequency:.3e} [Hz]'
@@ -175,9 +192,9 @@ class Node2D(Node['Medium[Node2D]', Any, Any]):
             X coordinate.
         y : float
             Y coordinate.
-        mac : type[TMAC]
+        mac : type[TMAC], default MAC
             MAC protocol.
-        routing : type[Routing]
+        routing : type[Routing], default Routing
             Routing protocol.
         """
         super().__init__(mac, routing)

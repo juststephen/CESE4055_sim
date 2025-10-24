@@ -1,13 +1,12 @@
 from medium.typing import N
-from routing.typing import TRouting
 
 from .base import MAC
 
-class MACAloha(MAC[N, TRouting]):
+class MACAloha(MAC[N]):
     """
     ALOHA MAC protocol class.
     """
-    def __init__(self, node: N, routing: type[TRouting]) -> None:
+    def __init__(self, node: N) -> None:
         """
         Initialise class.
 
@@ -15,10 +14,8 @@ class MACAloha(MAC[N, TRouting]):
         ----------
         node : N
             Node.
-        routing : type[Routing]
-            Routing protocol.
         """
-        super().__init__(node, routing)
+        super().__init__(node)
 
     def tick(self, time: float) -> None:
         """
@@ -30,4 +27,3 @@ class MACAloha(MAC[N, TRouting]):
             Current time.
         """
         self.time = time
-        self.routing.tick(time)

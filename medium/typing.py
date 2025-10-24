@@ -6,8 +6,5 @@ if TYPE_CHECKING:
     from .node import Node
     from .medium import Medium
 
-N = TypeVar(
-    'N',
-    bound='Node[Medium[Any], MAC[Node, Routing[MAC]], Routing[MAC]]'
-)
+N = TypeVar('N', bound='Node[Medium[Any], MAC[Node], Routing[Node]]')
 M = TypeVar('M', bound='Medium[Node]')

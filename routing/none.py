@@ -1,21 +1,21 @@
-from mac.typing import TMAC
+from medium.typing import N
 
 from .base import Routing
 
-class RoutingNone(Routing[TMAC]):
+class RoutingNone(Routing[N]):
     """
     Disabled routing protocol.
     """
-    def __init__(self, mac: TMAC) -> None:
+    def __init__(self, node: N) -> None:
         """
         Initialise class.
 
         Parameters
         ----------
-        mac : TMAC
-            MAC protocol.
+        node : N
+            Node.
         """
-        super().__init__(mac)
+        super().__init__(node)
 
     def tick(self, time: float) -> None:
         """
