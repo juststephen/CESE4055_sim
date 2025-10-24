@@ -1,13 +1,12 @@
 from abc import abstractmethod
-from typing import Generic
 
-from medium.typing import N
+from medium.node import MACInterface
 
-class MAC(Generic[N]):
+class MAC():
     """
     MAC base class.
     """
-    def __init__(self, node: N) -> None:
+    def __init__(self, interface: MACInterface) -> None:
         """
         Initialise MAC protocol class.
 
@@ -16,7 +15,7 @@ class MAC(Generic[N]):
         node : N
             Node.
         """
-        self.node = node
+        self.interface = interface
         self.time: float = 0
 
     @abstractmethod

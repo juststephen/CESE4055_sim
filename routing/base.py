@@ -1,13 +1,12 @@
 from abc import abstractmethod
-from typing import Generic
 
-from medium.typing import N
+from medium.interface import RoutingInterface
 
-class Routing(Generic[N]):
+class Routing():
     """
     Routing base class.
     """
-    def __init__(self, node: N) -> None:
+    def __init__(self, interface: RoutingInterface) -> None:
         """
         Initialise routing protocol class.
 
@@ -16,7 +15,7 @@ class Routing(Generic[N]):
         node : N
             Node.
         """
-        self.node = node
+        self.interface = interface
         self.time: float = 0
 
     @abstractmethod

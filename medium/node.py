@@ -1,7 +1,7 @@
 from abc import abstractmethod
-from collections import deque
-from enum import Enum
 from typing import Any, Generic, TYPE_CHECKING
+
+from medium.interface import MACInterface, NodeStatus, RoutingInterface
 
 if TYPE_CHECKING:
     from .medium import Medium
@@ -10,13 +10,7 @@ from .typing import M
 from mac.typing import TMAC
 from routing.typing import TRouting
 
-class NodeStatus(Enum):
-    IDLE = 0
-    RECEIVING = 1
-    TRANSMITTING = 2
-    COLLIDING = 3
-
-class Node(Generic[M, TMAC, TRouting]):
+class Node(Generic[M, TMAC, TRouting], MACInterface, RoutingInterface):
     """
     Node base class.
     """
@@ -33,7 +27,7 @@ class Node(Generic[M, TMAC, TRouting]):
         routing : type[TRouting]
             Routing protocol.
         """
-        self.id: int = Node._next_id
+        self._id: int = Node._next_id
         Node._next_id += 1
 
         self.medium: M | None = None
@@ -43,6 +37,14 @@ class Node(Generic[M, TMAC, TRouting]):
         self.routing = routing(self)
 
         self._status: NodeStatus = NodeStatus.IDLE
+    
+    @property
+    def id(self) -> int:
+        return self._id
+
+    @id.setter
+    def id(self, id: int) -> None:
+        self._id = id
 
     @property
     @abstractmethod
@@ -59,26 +61,10 @@ class Node(Generic[M, TMAC, TRouting]):
 
     @property
     def status(self) -> NodeStatus:
-        """
-        Node status getter.
-
-        Returns
-        -------
-        status : NodeStatus
-            Current status.
-        """
         return self._status
 
     @status.setter
     def status(self, status: NodeStatus) -> None:
-        """
-        Node status setter.
-
-        Parameters
-        ----------
-        status : NodeStatus
-            Status to set.
-        """
         match self._status:
             case NodeStatus.IDLE:
                 self._status = status
@@ -122,19 +108,17 @@ class Node(Generic[M, TMAC, TRouting]):
             The data to send.
         """
         self.routing.send(address, data)
+    
+    def MAC_send(self, address: int, data: bytes) -> None:
+        self.mac.send(address, data)
+    
+    def routing_receive(self, data: bytes) -> None:
+        self.routing.receive(data)
         
     def receive(
         self,
         data: bytes
     ) -> None:
-        """
-        Process received data.
-
-        Parameters
-        ----------
-        data : bytes
-            Receiving bytes.
-        """
         print(f'Node {self.id} received message: {data}')
 
     def antenna_receive(
@@ -170,20 +154,6 @@ class Node(Generic[M, TMAC, TRouting]):
         frequency: float = 2.4e9,
         tx_power_dbm: float = 20.0
     ) -> None:
-        """
-        Transmit data.
-
-        Parameters
-        ----------
-        data : bytes
-            Bytes to send.
-        bitrate : float, default: 1e6
-            The bitrate for the data transmission, by default 1 [Mb/s].
-        frequency : float, default: 2.4e9
-            Transmission frequency.
-        tx_power_dbm : float
-            Transmission power.
-        """
         if not self.medium:
             raise RuntimeError('Node is not part of a medium.')
         self.status = NodeStatus.TRANSMITTING
