@@ -1,7 +1,9 @@
 from medium.interface import MACInterface
-from medium.typing import N
 
 from .base import MAC
+
+HEADER_BYTES: int = 4
+BITRATE: float = 4e6
 
 class MACAloha(MAC):
     """
@@ -11,13 +13,24 @@ class MACAloha(MAC):
         super().__init__(interface)
 
     def send(self, address: int, data: bytes) -> None:
-        # TODO add address header
-        self.interface.antenna_transmit(data, bitrate=4e6)
+        self.interface.antenna_transmit(address.to_bytes(HEADER_BYTES, signed=True) + data, bitrate=BITRATE)
 
     def receive(self, data: bytes) -> None:
-        # TODO check null data
-        # TODO check address header
-        self.interface.routing_receive(data)
+        # Return if data is not received correctly
+        if (data == None or len(data) < HEADER_BYTES):
+            return
+
+        # Split header form content
+        header: bytes = data[:HEADER_BYTES]
+        content: bytes = data[HEADER_BYTES:]
+
+        # Return if data is not intended for this node
+        data_id: int = int.from_bytes(header, signed=True)
+        if (data_id >= 0 and data_id != self.interface.id):
+            return
+        
+        # Send content to next layer
+        self.interface.routing_receive(content)
 
     def tick(self, time: float) -> None:
         self.time = time

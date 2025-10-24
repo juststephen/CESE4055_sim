@@ -1,5 +1,4 @@
 from medium.interface import RoutingInterface
-from medium.typing import N
 
 from .base import Routing
 
@@ -15,7 +14,7 @@ class RoutingNone(Routing):
         self.interface.MAC_send(address, data)
 
     def receive(self, data: bytes) -> None:
-        # No routing logic to process
+        # No routing data to intercept
         self.interface.receive(data)
 
     def tick(self, time: float) -> None:

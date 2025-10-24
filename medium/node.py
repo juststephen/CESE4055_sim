@@ -107,6 +107,7 @@ class Node(Generic[M, TMAC, TRouting], MACInterface, RoutingInterface):
         data: bytes
             The data to send.
         """
+        print(f'Sending message to node {address}: {data}')
         self.routing.send(address, data)
     
     def MAC_send(self, address: int, data: bytes) -> None:
@@ -139,10 +140,10 @@ class Node(Generic[M, TMAC, TRouting], MACInterface, RoutingInterface):
         rx_power_dbm : float
             Received power.
         """
-        print(
-            f'Node {self.id} received {data} at '
-            f'{rx_power_dbm:.2f} [dBm] at {frequency:.3e} [Hz]'
-        )
+        # print(
+        #     f'Node {self.id} received {data} at '
+        #     f'{rx_power_dbm:.2f} [dBm] at {frequency:.3e} [Hz]'
+        # )
         self.status = NodeStatus.IDLE
         self.mac.receive(data)
 
