@@ -33,10 +33,10 @@ class SimulationThread(QThread):
             # Occasionally generate traffic
             if not self.medium.has_events_queued:
                 i = np.random.randint(0, len(self.medium.nodes))
-                self.medium.nodes[i].transmit(f'test {i}'.encode(), bitrate=4e6)
+                self.medium.nodes[i].send(-1, f'test {i}'.encode())
             if np.random.rand() < 1e-2:
                 i = np.random.randint(0, len(self.medium.nodes))
-                self.medium.nodes[i].transmit(f'rand {i}'.encode(), bitrate=8e6)
+                self.medium.nodes[i].send(-1, f'rand {i}'.encode())
 
             # Sleep to get 30 steps per second
             time.sleep(max(0.033 - (time.time() - start_time), 0))

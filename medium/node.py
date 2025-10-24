@@ -36,8 +36,6 @@ class Node(Generic[M, TMAC, TRouting]):
         self.id: int = Node._next_id
         Node._next_id += 1
 
-        self._rx_buffer: deque[bytes] = deque(maxlen=8)
-
         self.medium: M | None = None
         self.time: float = 0
 
@@ -107,27 +105,46 @@ class Node(Generic[M, TMAC, TRouting]):
         self.time = time
         self.mac.tick(time)
         self.routing.tick(time)
-
-    def read_buffer(self) -> bytes | None:
+        
+    def send(
+        self,
+        address: int,
+        data: bytes
+    ) -> None:
         """
-        Read potential bytes from the receive buffer.
+        Sends data to an address.
 
-        Returns
-        -------
-        bytes | None
-            Potential bytes in the buffer.
+        Parameters
+        ----------
+        address: int
+            Address of the target node. Negative values for broadcast.
+        data: bytes
+            The data to send.
         """
-        if self._rx_buffer:
-            return self._rx_buffer.popleft()
-
+        self.routing.send(address, data)
+        
     def receive(
+        self,
+        data: bytes
+    ) -> None:
+        """
+        Process received data.
+
+        Parameters
+        ----------
+        data : bytes
+            Receiving bytes.
+        """
+        print(f'Node {self.id} received message: {data}')
+
+    def antenna_receive(
         self,
         data: bytes,
         frequency: float,
         rx_power_dbm: float
     ) -> None:
         """
-        Process received data.
+        Handle data received by the antenna.
 
         Parameters
         ----------
@@ -138,14 +155,14 @@ class Node(Generic[M, TMAC, TRouting]):
         rx_power_dbm : float
             Received power.
         """
-        self.status = NodeStatus.IDLE
-        self._rx_buffer.append(data)
         print(
             f'Node {self.id} received {data} at '
             f'{rx_power_dbm:.2f} [dBm] at {frequency:.3e} [Hz]'
         )
+        self.status = NodeStatus.IDLE
+        self.mac.receive(data)
 
-    def transmit(
+    def antenna_transmit(
         self,
         data: bytes,
         *,

@@ -7,23 +7,16 @@ class MACAloha(MAC[N]):
     ALOHA MAC protocol class.
     """
     def __init__(self, node: N) -> None:
-        """
-        Initialise class.
-
-        Parameters
-        ----------
-        node : N
-            Node.
-        """
         super().__init__(node)
 
-    def tick(self, time: float) -> None:
-        """
-        Tick method.
+    def send(self, address: int, data: bytes) -> None:
+        # TODO add address header
+        self.node.antenna_transmit(data, bitrate=4e6)
 
-        Parameters
-        ----------
-        time : float
-            Current time.
-        """
+    def receive(self, data: bytes) -> None:
+        # TODO check null data
+        # TODO check address header
+        self.node.routing.receive(data)
+
+    def tick(self, time: float) -> None:
         self.time = time

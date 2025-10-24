@@ -20,6 +20,32 @@ class MAC(Generic[N]):
         self.time: float = 0
 
     @abstractmethod
+    def send(self, address: int, data: bytes) -> None:
+        """
+        Sends data to an address using the implemented MAC protocol.
+
+        Parameters
+        ----------
+        address: int
+            Address of the target node. Negative values for broadcast.
+        data: bytes
+            The data to send.
+        """
+        ...
+
+    @abstractmethod
+    def receive(self, data: bytes) -> None:
+        """
+        Receive data from the PHY layer.
+
+        Parameters
+        ----------
+        data: bytes
+            The recieved data.
+        """
+        ...
+
+    @abstractmethod
     def tick(self, time: float) -> None:
         """
         Tick method.
