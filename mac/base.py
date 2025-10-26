@@ -1,14 +1,12 @@
 from abc import abstractmethod
-from typing import Generic
 
-from medium.typing import N
-from routing.typing import TRouting
+from medium.node import MACInterface
 
-class MAC(Generic[N, TRouting]):
+class MAC():
     """
     MAC base class.
     """
-    def __init__(self, node: N, routing: type[TRouting]) -> None:
+    def __init__(self, interface: MACInterface) -> None:
         """
         Initialise MAC protocol class.
 
@@ -16,12 +14,35 @@ class MAC(Generic[N, TRouting]):
         ----------
         node : N
             Node.
-        routing : type[Routing]
-            Routing protocol.
         """
-        self.node = node
-        self.routing = routing(self)
+        self.interface = interface
         self.time: float = 0
+
+    @abstractmethod
+    def send(self, address: int, data: bytes) -> None:
+        """
+        Sends data to an address using the implemented MAC protocol.
+
+        Parameters
+        ----------
+        address: int
+            Address of the target node. Negative values for broadcast.
+        data: bytes
+            The data to send.
+        """
+        ...
+
+    @abstractmethod
+    def receive(self, data: bytes) -> None:
+        """
+        Receive data from the PHY layer.
+
+        Parameters
+        ----------
+        data: bytes
+            The recieved data.
+        """
+        ...
 
     @abstractmethod
     def tick(self, time: float) -> None:
@@ -32,38 +53,5 @@ class MAC(Generic[N, TRouting]):
         ----------
         time : float
             Current time.
-        """
-        ...
-
-    @abstractmethod
-    def receive(
-        self,
-        data: bytes,
-        frequency: float,
-        rx_power_dbm: float
-    ) -> None:
-        """
-        Process received data.
-
-        Parameters
-        ----------
-        data : bytes
-            Receiving bytes.
-        frequency : float
-            Frequency received.
-        rx_power_dbm : float
-            Received power.
-        """
-        ...
-
-    @abstractmethod
-    def transmit(self, data: bytes) -> None:
-        """
-        Transmit data.
-
-        Parameters
-        ----------
-        data : bytes
-            Bytes to send.
         """
         ...

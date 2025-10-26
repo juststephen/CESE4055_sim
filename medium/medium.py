@@ -42,7 +42,7 @@ class Reception(Generic[N]):
         """
         Finalise reception.
         """
-        self.node.receive(
+        self.node.antenna_receive(
             self.data,
             self.frequency,
             self.power_dbm

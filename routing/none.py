@@ -1,29 +1,21 @@
-from mac.typing import TMAC
+from medium.interface import RoutingInterface
 
 from .base import Routing
 
-class RoutingNone(Routing[TMAC]):
+class RoutingNone(Routing):
     """
     Disabled routing protocol.
     """
-    def __init__(self, mac: TMAC) -> None:
-        """
-        Initialise class.
+    def __init__(self, node: RoutingInterface) -> None:
+        super().__init__(node)
 
-        Parameters
-        ----------
-        mac : TMAC
-            MAC protocol.
-        """
-        super().__init__(mac)
+    def send(self, address: int, data: bytes) -> None:
+        # Ignore routing and just send the message
+        self.interface.MAC_send(address, data)
+
+    def receive(self, data: bytes) -> None:
+        # No routing data to intercept
+        self.interface.receive(data)
 
     def tick(self, time: float) -> None:
-        """
-        Tick method.
-
-        Parameters
-        ----------
-        time : float
-            Current time.
-        """
         self.time = time

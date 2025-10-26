@@ -1,23 +1,48 @@
 from abc import abstractmethod
-from typing import Generic
 
-from mac.typing import TMAC
+from medium.interface import RoutingInterface
 
-class Routing(Generic[TMAC]):
+class Routing():
     """
     Routing base class.
     """
-    def __init__(self, mac: TMAC) -> None:
+    def __init__(self, interface: RoutingInterface) -> None:
         """
         Initialise routing protocol class.
 
         Parameters
         ----------
-        mac : TMAC
-            MAC protocol.
+        node : N
+            Node.
         """
-        self.mac = mac
+        self.interface = interface
         self.time: float = 0
+
+    @abstractmethod
+    def send(self, address: int, data: bytes) -> None:
+        """
+        Sends data to an address using the implemented routing protocol.
+
+        Parameters
+        ----------
+        address: int
+            Address of the target node. Negative values for broadcast.
+        data: bytes
+            The data to send.
+        """
+        ...
+
+    @abstractmethod
+    def receive(self, data: bytes) -> None:
+        """
+        Receive data from the MAC layer.
+
+        Parameters
+        ----------
+        data: bytes
+            The recieved data.
+        """
+        ...
 
     @abstractmethod
     def tick(self, time: float) -> None:
@@ -28,29 +53,5 @@ class Routing(Generic[TMAC]):
         ----------
         time : float
             Current time.
-        """
-        ...
-
-    @abstractmethod
-    def receive(self, data: bytes) -> None:
-        """
-        Process received data.
-
-        Parameters
-        ----------
-        data : bytes
-            Receiving bytes.
-        """
-        ...
-
-    @abstractmethod
-    def transmit(self, data: bytes) -> None:
-        """
-        Transmit data.
-
-        Parameters
-        ----------
-        data : bytes
-            Bytes to send.
         """
         ...
