@@ -9,6 +9,8 @@ from typing import Any, Generic
 from .node import NodeStatus
 from .typing import N
 
+WC_STD: float = 3
+
 @dataclass(order=True)
 class Event:
     """
@@ -69,10 +71,9 @@ class Medium(Generic[N]):
         self._active_receptions: dict[int, list[Reception[N]]] = defaultdict(list)
 
         # Propogation parameters
-        self.path_loss_exp: float = 2
-        self.fading_std: float = 4
-        self.sensitivity_dbm: float = -90
-        self.search_radius: float = 1e5 # [m]
+        self.path_loss_exp: float = 2.8
+        self.fading_std: float = 2
+        self.sensitivity_dbm: float = -90 # TODO seems unused ?
         self.light_speed: float = 299792458 # [m/s]
 
         # SINR parameters for colissions and noise
@@ -128,10 +129,15 @@ class Medium(Generic[N]):
         if not self._tree:
             return
 
-        # Query potential receivers near the sender
+        # Query potential receivers near the sender based on best case propagation
+        search_radius: float = pow(
+            10.0,
+            (tx_power_dbm + WC_STD * self.fading_std + 20 * np.log10(WC_STD) * 0.1 - self.sinr_threshold_db - self.noise_floor_dbm) /
+            (10 * self.path_loss_exp)
+        )
         indices: list[int] = self._tree.query_ball_point(
             sender.pos,
-            self.search_radius
+            search_radius
         )
         # Select receivers, excluding the sender
         receivers = [

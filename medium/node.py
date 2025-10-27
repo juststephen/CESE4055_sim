@@ -15,6 +15,11 @@ class Node(Generic[M, TMAC, TRouting], MACInterface, RoutingInterface):
     Node base class.
     """
     _next_id: int = 0
+    # Variables to check reception of messages
+    # TODO this functionality is more suited for in the thread, but this needs some callback upon reception
+    _messages: dict[bytes, float] = dict()
+    _message_count: int = 0
+    _total_delay: float = 0
 
     def __init__(self, mac: type[TMAC], routing: type[TRouting]) -> None:
         """
@@ -41,10 +46,6 @@ class Node(Generic[M, TMAC, TRouting], MACInterface, RoutingInterface):
     @property
     def id(self) -> int:
         return self._id
-
-    @id.setter
-    def id(self, id: int) -> None:
-        self._id = id
 
     @property
     @abstractmethod
@@ -109,6 +110,9 @@ class Node(Generic[M, TMAC, TRouting], MACInterface, RoutingInterface):
         """
         print(f'Sending message to node {address}: {data}')
         self.routing.send(address, data)
+        # Store the message for later verification
+        Node._messages[data] = self.time
+        Node._message_count += 1
     
     def MAC_send(self, address: int, data: bytes) -> None:
         self.mac.send(address, data)
@@ -120,7 +124,17 @@ class Node(Generic[M, TMAC, TRouting], MACInterface, RoutingInterface):
         self,
         data: bytes
     ) -> None:
-        print(f'Node {self.id} received message: {data}')
+        # Calculate and print info about message reception
+        # TODO integrate the statistics in the UI
+        start_time = self._messages.pop(data, -1)
+        if start_time < 0:
+            start_time = self.time
+            print("Cannot determine message start time")
+        Node._total_delay += self.time - start_time
+        received = Node._message_count - len(Node._messages)
+        success_rate = 100 * received / Node._message_count
+        avg_delay = Node._total_delay / received
+        print(f'{success_rate:.1f}% reception - Avg delay: {avg_delay:.2e}s - Node {self.id} received message: {data}')
 
     def antenna_receive(
         self,
