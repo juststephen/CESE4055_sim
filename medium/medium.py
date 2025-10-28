@@ -73,7 +73,6 @@ class Medium(Generic[N]):
         # Propogation parameters
         self.path_loss_exp: float = 2.8
         self.fading_std: float = 2
-        self.sensitivity_dbm: float = -90 # TODO seems unused ?
         self.light_speed: float = 299792458 # [m/s]
 
         # SINR parameters for colissions and noise
