@@ -3,7 +3,7 @@ from medium.interface import MACInterface
 from .base import MAC
 
 HEADER_BYTES: int = 4
-BITRATE: float = 4e6
+BITRATE: float = 2e6
 
 class MACAloha(MAC):
     """

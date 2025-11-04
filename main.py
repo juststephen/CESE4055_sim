@@ -2,7 +2,7 @@ import numpy as np
 from PySide6.QtWidgets import QApplication
 import sys
 
-from mac import MACAloha
+from mac import MACAloha, MAC_CSMA_CA
 from medium import Medium, Node2D
 from ui import MainWindow
 from routing import RoutingNone
@@ -13,7 +13,7 @@ m = Medium[Node2D]()
 nodes = []
 for _ in range(1048):
     x, y = np.random.uniform(-1e4, 1e4, size=2)
-    n = Node2D(x, y, MACAloha, RoutingNone)
+    n = Node2D(x, y, MAC_CSMA_CA, RoutingNone)
     m.add_node(n)
 
 if __name__ == '__main__':

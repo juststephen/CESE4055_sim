@@ -4,6 +4,9 @@ import time
 
 from medium import Medium, Node2D
 
+AVG_DATA_RATE: float = 1e6
+AVG_MSG_LEN: float = 22
+
 class SimulationThread(QThread):
     """
     A thread for the simulation.
@@ -31,17 +34,23 @@ class SimulationThread(QThread):
             self.medium.step(self.step_size)
 
             # Occasionally generate traffic
-            if not self.medium.has_events_queued:
+            if np.random.rand() < self.step_size * AVG_DATA_RATE / AVG_MSG_LEN:
                 i = np.random.randint(0, len(self.medium.nodes))
-                j = np.random.randint(0, len(self.medium.nodes))
-                self.medium.nodes[i].send(j, f'test {i}'.encode())
-            if np.random.rand() < 1e-2:
-                i = np.random.randint(0, len(self.medium.nodes))
-                j = np.random.randint(0, len(self.medium.nodes))
-                self.medium.nodes[i].send(j, f'rand {i}'.encode())
+                node = self.medium.nodes[i]
+                address: int = i
+                if self.medium._tree:
+                    # Try to target local nodes, useful for testing MAC without routing
+                    indices: list[int] = self.medium._tree.query_ball_point(node.pos, 2e3)
+                    if len(indices) > 1:
+                        while address == i:
+                            j = np.random.randint(0, len(indices))
+                            address = indices[j]
+                while address == i:
+                    address = np.random.randint(0, len(self.medium.nodes))
+                node.send(address, f'Sender: {i}, Code: {int(1000 * np.random.rand())}'.encode())
 
-            # Sleep to get 30 steps per second
-            time.sleep(max(0.033 - (time.time() - start_time), 0))
+            # Sleep to get 100 steps per second
+            time.sleep(max(0.01 - (time.time() - start_time), 0))
 
     def stop(self) -> None:
         """
