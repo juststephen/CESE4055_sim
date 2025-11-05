@@ -4,7 +4,7 @@ import time
 
 from medium import Medium, Node2D
 
-AVG_DATA_RATE: float = 1e6
+AVG_DATA_RATE: float = 1e4
 AVG_MSG_LEN: float = 22
 
 class SimulationThread(QThread):
@@ -38,13 +38,13 @@ class SimulationThread(QThread):
                 i = np.random.randint(0, len(self.medium.nodes))
                 node = self.medium.nodes[i]
                 address: int = i
-                if self.medium._tree:
-                    # Try to target local nodes, useful for testing MAC without routing
-                    indices: list[int] = self.medium._tree.query_ball_point(node.pos, 2e3)
-                    if len(indices) > 1:
-                        while address == i:
-                            j = np.random.randint(0, len(indices))
-                            address = indices[j]
+                # if self.medium._tree:
+                #     # Try to target local nodes, useful for testing MAC without routing
+                #     indices: list[int] = self.medium._tree.query_ball_point(node.pos, 2e3)
+                #     if len(indices) > 1:
+                #         while address == i:
+                #             j = np.random.randint(0, len(indices))
+                #             address = indices[j]
                 while address == i:
                     address = np.random.randint(0, len(self.medium.nodes))
                 node.send(address, f'Sender: {i}, Code: {int(1000 * np.random.rand())}'.encode())

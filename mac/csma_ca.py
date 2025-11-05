@@ -10,7 +10,7 @@ BITRATE: float = 2e6
 BUFFER_LEN: int = 5
 DIFS: float = 4e-5
 CF: float = 1.5e-5
-N: int = 8
+N: int = 64
 
 class MAC_CSMA_CA(MAC):
     """
@@ -38,7 +38,7 @@ class MAC_CSMA_CA(MAC):
         if (data == None or len(data) < HEADER_BYTES):
             return
 
-        # Split header form content
+        # Split header from content
         header: bytes = data[:HEADER_BYTES]
         content: bytes = data[HEADER_BYTES:]
 
