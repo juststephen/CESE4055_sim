@@ -8,9 +8,9 @@ from .base import MAC
 HEADER_BYTES: int = 4
 BITRATE: float = 2e6
 BUFFER_LEN: int = 5
-DIFS: float = 4e-5
-CF: float = 1.5e-5
-N: int = 64
+DIFS: float = 1e-4
+CF: float = 4e-5
+N: int = 16
 
 class MAC_CSMA_CA(MAC):
     """

@@ -12,7 +12,7 @@ np.random.seed(0)
 m = Medium[Node2D]()
 nodes = []
 for _ in range(1048):
-    x, y = np.random.uniform(-1e4, 1e4, size=2)
+    x, y = np.random.uniform(-1e5, 1e5, size=2)
     n = Node2D(x, y, MAC_CSMA_CA, RoutingFlooding)
     m.add_node(n)
 

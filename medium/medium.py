@@ -71,7 +71,7 @@ class Medium(Generic[N]):
         self._active_receptions: dict[int, list[Reception[N]]] = defaultdict(list)
 
         # Propogation parameters
-        self.path_loss_exp: float = 2.8
+        self.path_loss_exp: float = 2.5
         self.fading_std: float = 2
         self.light_speed: float = 299792458 # [m/s]
 

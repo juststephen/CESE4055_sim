@@ -43,7 +43,7 @@ class RoutingFlooding(Routing):
     
         # If this message is already received, ignore
         previous = self._received.get(header)
-        if previous and self.time - previous > INDEX_TIMEOUT:
+        if previous and self.time - previous < INDEX_TIMEOUT:
             return
         self._received[header] = self.time
 

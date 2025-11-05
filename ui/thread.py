@@ -5,7 +5,7 @@ import time
 from medium import Medium, Node2D
 
 AVG_DATA_RATE: float = 1e4
-AVG_MSG_LEN: float = 22
+AVG_MSG_LEN: float = 33
 
 class SimulationThread(QThread):
     """
@@ -14,7 +14,7 @@ class SimulationThread(QThread):
     def __init__(
         self,
         medium: Medium[Node2D],
-        step_size: float = 5e-7
+        step_size: float = 1e-6
     ):
         """
         Initialise simulation thread.
@@ -47,7 +47,10 @@ class SimulationThread(QThread):
                 #             address = indices[j]
                 while address == i:
                     address = np.random.randint(0, len(self.medium.nodes))
-                node.send(address, f'Sender: {i}, Code: {int(1000 * np.random.rand())}'.encode())
+
+                other = self.medium.nodes[address]
+                dist: float = pow(pow(other.x - node.x, 2) + pow(other.y - node.y, 2), .5)
+                node.send(address, f'Sender:{i}, Code:{int(10 * np.random.rand())}, Dist:{dist:.2e}'.encode())
 
             # Sleep to get 100 steps per second
             time.sleep(max(0.01 - (time.time() - start_time), 0))
