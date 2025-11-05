@@ -12,8 +12,8 @@ class Routing():
 
         Parameters
         ----------
-        node : N
-            Node.
+        interface: RoutingInterface
+            Accessible for the routing layer.
         """
         self.interface = interface
         self.time: float = 0

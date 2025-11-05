@@ -21,7 +21,14 @@ class Node(Generic[M, TMAC, TRouting], MACInterface, RoutingInterface):
     _message_count: int = 0
     _total_delay: float = 0
 
-    def __init__(self, mac: type[TMAC], routing: type[TRouting]) -> None:
+    def __init__(
+        self,
+        mac: type[TMAC],
+        routing: type[TRouting],
+        *,
+        mac_param: dict[str, Any] = {},
+        routing_param: dict[str, Any] = {}
+    ) -> None:
         """
         Initialise node object.
 
@@ -31,6 +38,10 @@ class Node(Generic[M, TMAC, TRouting], MACInterface, RoutingInterface):
             MAC protocol.
         routing : type[TRouting]
             Routing protocol.
+        mac_param: dict[str, Any], default: {}
+            Parameters to modify MAC protocol
+        routing_param: dict[str, Any], default: {}
+            Parameters to modify routing protocol
         """
         self._id: int = Node._next_id
         Node._next_id += 1
@@ -38,8 +49,8 @@ class Node(Generic[M, TMAC, TRouting], MACInterface, RoutingInterface):
         self.medium: M | None = None
         self.time: float = 0
 
-        self.mac = mac(self)
-        self.routing = routing(self)
+        self.mac = mac(self, **mac_param)
+        self.routing = routing(self, **routing_param)
 
         self._status: NodeStatus = NodeStatus.IDLE
     
@@ -183,7 +194,10 @@ class Node2D(Node['Medium[Node2D]', Any, Any]):
         x: float,
         y: float,
         mac: type[TMAC],
-        routing: type[TRouting]
+        routing: type[TRouting],
+        *,
+        mac_param: dict[str, Any] = {},
+        routing_param: dict[str, Any] = {}
     ) -> None:
         """
         Initialise node object.
@@ -194,12 +208,16 @@ class Node2D(Node['Medium[Node2D]', Any, Any]):
             X coordinate.
         y : float
             Y coordinate.
-        mac : type[TMAC], default MAC
+        mac : type[TMAC]
             MAC protocol.
-        routing : type[Routing], default Routing
+        routing : type[Routing]
             Routing protocol.
+        mac_param: dict[str, Any], default: {}
+            Parameters to modify MAC protocol
+        routing_param: dict[str, Any], default: {}
+            Parameters to modify routing protocol
         """
-        super().__init__(mac, routing)
+        super().__init__(mac, routing, mac_param=mac_param, routing_param=routing_param)
         self.x = x
         self.y = y
 

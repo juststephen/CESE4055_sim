@@ -9,7 +9,7 @@ INDEX_TIMEOUT: float = 1.0
 
 class RoutingFlooding(Routing):
     """
-    Disabled routing protocol.
+    Flooding routing protocol.
     """
     def __init__(self, node: RoutingInterface) -> None:
         super().__init__(node)
