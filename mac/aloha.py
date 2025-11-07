@@ -3,17 +3,28 @@ from medium.interface import MACInterface
 from .base import MAC
 
 HEADER_BYTES: int = 4
-BITRATE: float = 2e6
 
 class MACAloha(MAC):
     """
     ALOHA MAC protocol class.
     """
-    def __init__(self, interface: MACInterface) -> None:
+    def __init__(self, interface: MACInterface, *, bitrate: float = 2e6) -> None:
+        """
+        Initialise MAC protocol class.
+
+        Parameters
+        ----------
+        interface: MACInterface
+            Accessible for the MAC layer.
+        bitrate: float, default: 2e6
+            The bitrate for sending raw data using this protocol.
+        """
         super().__init__(interface)
 
+        self._bitrate = bitrate
+
     def send(self, address: int, data: bytes) -> None:
-        self.interface.antenna_transmit(address.to_bytes(HEADER_BYTES, signed=True) + data, bitrate=BITRATE)
+        self.interface.antenna_transmit(address.to_bytes(HEADER_BYTES, signed=True) + data, bitrate=self._bitrate)
 
     def receive(self, data: bytes) -> None:
         # Return if data is not received correctly

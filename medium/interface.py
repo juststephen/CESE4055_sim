@@ -52,7 +52,7 @@ class MACInterface():
             The bitrate for the data transmission, by default 1 [Mb/s].
         frequency : float, default: 2.4e9
             Transmission frequency.
-        tx_power_dbm : float
+        tx_power_dbm : float, default: 20.0
             Transmission power.
         """
         ...

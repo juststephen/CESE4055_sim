@@ -12,8 +12,8 @@ class MAC():
 
         Parameters
         ----------
-        node : N
-            Node.
+        interface: MACInterface
+            Accessible for the MAC layer.
         """
         self.interface = interface
         self.time: float = 0

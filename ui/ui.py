@@ -1,3 +1,4 @@
+from typing import Any
 import numpy as np
 from PySide6.QtCore import QTimer
 from PySide6.QtGui import QCloseEvent
@@ -14,7 +15,7 @@ class MainWindow(QMainWindow):
     """
     Main window class for the UI.
     """
-    def __init__(self, medium: Medium[Node2D]):
+    def __init__(self, medium: Medium[Node2D], *, thread_param: dict[str, Any] = {}):
         """
         Initialise main window.
 
@@ -22,6 +23,8 @@ class MainWindow(QMainWindow):
         ----------
         medium : Medium[Node2D]
             2D simulation medium.
+        thread_param: dict[str, Any], default: {}
+            Parameters to modify the simulation thread
         """
         super().__init__()
         self.medium = medium
@@ -60,7 +63,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
 
         # Seperate thread for the simulation
-        self.sim_thread = SimulationThread(self.medium)
+        self.sim_thread = SimulationThread(self.medium, **thread_param)
         self.sim_thread.start()
 
         # Timer for simulation and UI updates
