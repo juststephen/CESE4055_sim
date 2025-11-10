@@ -22,6 +22,7 @@ class MessageNode():
 class Messages:
     # (destination_id, message) -> (sending_time, sender)
     _messages: dict[tuple[int, bytes], tuple[float, MessageNode | None]] = dict()
+    _broadcasts: set[bytes] = set()
     _sent_count: int = 0
     _received_count: int = 0
     _total_delay: float = 0
@@ -36,6 +37,7 @@ class Messages:
         
         # Broadcast messages are ignored, because they can have more than one receiver
         if dest < 0:
+            Messages._broadcasts.add(data)
             print("Broadcast message ignored in statistics")
             return
         
@@ -45,6 +47,10 @@ class Messages:
     
     @staticmethod
     def verify_message(node: MessageNode | None, data: bytes, time: float) -> tuple[float, float]:
+        # Statistics are not implemented for broadcasts
+        if data in Messages._broadcasts:
+            return (0, 0)
+
         # Mark as received
         Messages._received_count += 1
 

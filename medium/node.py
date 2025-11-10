@@ -144,7 +144,9 @@ class Node(Generic[M, TMAC, TRouting], MACInterface, RoutingInterface):
         # Register received message
         (delay, dist) = Messages.verify_message(receiver, data, self.time)
 
-        print(f'Delay: {delay:.2e}s, dist: {dist:.2e}s - Node {self.id} received message: {data}')
+        # Only print if valid delay and distance
+        if delay > 0 and dist > 0:
+            print(f'Delay: {delay:.2e}s, distance: {dist:.2e}s - Node {self.id} received message: {data}')
 
     def antenna_receive(
         self,
