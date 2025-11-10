@@ -34,6 +34,11 @@ class Messages:
             print("Invalid sending node")
             return
         
+        # Broadcast messages are ignored, because they can have more than one receiver
+        if dest < 0:
+            print("Broadcast message ignored in statistics")
+            return
+        
         # Store the message for later verification
         Messages._messages[(dest, data)] = (time, node)
         Messages._sent_count += 1
