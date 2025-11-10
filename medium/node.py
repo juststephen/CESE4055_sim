@@ -2,6 +2,7 @@ from abc import abstractmethod
 from typing import Any, Generic, TYPE_CHECKING
 
 from medium.interface import MACInterface, NodeStatus, RoutingInterface
+from medium.messages import MessageNode, Messages
 
 if TYPE_CHECKING:
     from .medium import Medium
@@ -15,11 +16,6 @@ class Node(Generic[M, TMAC, TRouting], MACInterface, RoutingInterface):
     Node base class.
     """
     _next_id: int = 0
-    # Variables to check reception of messages
-    # TODO this functionality is more suited for in the thread, but this needs some callback upon reception
-    _messages: dict[bytes, float] = dict()
-    _message_count: int = 0
-    _total_delay: float = 0
 
     def __init__(
         self,
@@ -121,9 +117,14 @@ class Node(Generic[M, TMAC, TRouting], MACInterface, RoutingInterface):
         """
         print(f'Sending message to node {address}: {data}')
         self.routing.send(address, data)
-        # Store the message for later verification
-        Node._messages[data] = self.time
-        Node._message_count += 1
+
+        # Sender is only allowed if it is a MessageNode
+        sender: MessageNode | None = None
+        if isinstance(self, MessageNode):
+            sender = self
+
+        # Register the sent message
+        Messages.register_message(sender, address, data, self.time)
     
     def MAC_send(self, address: int, data: bytes) -> None:
         self.mac.send(address, data)
@@ -135,17 +136,15 @@ class Node(Generic[M, TMAC, TRouting], MACInterface, RoutingInterface):
         self,
         data: bytes
     ) -> None:
-        # Calculate and print info about message reception
-        # TODO integrate the statistics in the UI
-        start_time = self._messages.pop(data, -1)
-        if start_time < 0:
-            start_time = self.time
-            print("Cannot determine message start time")
-        Node._total_delay += self.time - start_time
-        received = Node._message_count - len(Node._messages)
-        success_rate = 100 * received / Node._message_count
-        avg_delay = Node._total_delay / received
-        print(f'{success_rate:.1f}% reception - Avg delay: {avg_delay:.2e}s - Node {self.id} received message: {data}')
+        # Receiver is only allowed if it is a MessageNode
+        receiver: MessageNode | None = None
+        if isinstance(self, MessageNode):
+            receiver = self
+
+        # Register received message
+        (delay, dist) = Messages.verify_message(receiver, data, self.time)
+
+        print(f'Delay: {delay:.2e}s, dist: {dist:.2e}s - Node {self.id} received message: {data}')
 
     def antenna_receive(
         self,
@@ -185,7 +184,7 @@ class Node(Generic[M, TMAC, TRouting], MACInterface, RoutingInterface):
         self.status = NodeStatus.TRANSMITTING
         self.medium.propagate(self, data, bitrate, frequency, tx_power_dbm)
 
-class Node2D(Node['Medium[Node2D]', Any, Any]):
+class Node2D(Node['Medium[Node2D]', Any, Any], MessageNode):
     """
     Two dimensional node class.
     """
