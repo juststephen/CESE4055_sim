@@ -6,6 +6,7 @@ from medium import Medium, Node2D
 
 MSG: str = "Sender:{send}, Code:{code}, Dist:{dist:.2e}"
 AVG_MSG_LEN: float = 33
+SIMULATION_FPS: int = 100
 
 class SimulationThread(QThread):
     """
@@ -40,9 +41,11 @@ class SimulationThread(QThread):
         """
         Run the simulation at roughly 30 steps a second.
         """
-        while self._running:
-            start_time = time.time()
 
+        start_time: float = time.time()
+        step: float = 1.0 / SIMULATION_FPS
+        
+        while self._running:
             self.medium.step(self._step_size)
 
             # Occasionally generate traffic
@@ -64,8 +67,9 @@ class SimulationThread(QThread):
                 dist: float = pow(pow(other.x - node.x, 2) + pow(other.y - node.y, 2), .5)
                 node.send(address, MSG.format(send=i, code=int(10 * np.random.rand()), dist=dist).encode())
 
-            # Sleep to get 100 steps per second
-            time.sleep(max(0.01 - (time.time() - start_time), 0))
+            # Sleep to get SIMULATION_FPS steps per second
+            time.sleep(max(step - (time.time() - start_time), 0))
+            start_time += step
 
     def stop(self) -> None:
         """

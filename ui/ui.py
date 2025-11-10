@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (
 )
 import pyqtgraph as pg
 
-from medium import NodeStatus, Medium, Node2D
+from medium import NodeStatus, Medium, Node2D, Messages
 
 from .thread import SimulationThread
 
@@ -89,6 +89,9 @@ class MainWindow(QMainWindow):
         self.overview_label.setText(
             f'Time: {self.medium.time:.3e}\n'
             f'Total Nodes: {len(self.medium.nodes)}\n'
+            f'Success rate: {Messages.get_success_rate():.1f}% (end to end)\n'
+            f'Average delay: {Messages.get_avg_delay():.2e}s (end to end)\n'
+            f'Average speed: {Messages.get_avg_speed():.2e}m/s (end to end)\n'
         )
 
 
