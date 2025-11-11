@@ -47,7 +47,7 @@ class MainWindow(QMainWindow):
 
         # Path loss exponent option
         self.option_pathloss = NumericInputWidget(
-            'Path loss exponent',
+            'Path loss exponent [-]',
             medium.path_loss_exp,
             float,
             2,
@@ -56,6 +56,60 @@ class MainWindow(QMainWindow):
         )
         self.option_pathloss.value_updated.connect(
             lambda value: setattr(medium, 'path_loss_exp', value) # type: ignore
+        )
+
+        # Fading
+        self.option_fading = NumericInputWidget(
+            'Fading STD [-]',
+            medium.fading_std,
+            float,
+            1,
+            3,
+            0.1
+        )
+        self.option_fading.value_updated.connect(
+            lambda value: setattr(medium, 'fading_std', value) # type: ignore
+        )
+
+        # Light speed
+        self.option_c = NumericInputWidget(
+            'Light Speed [%]',
+            medium.light_speed / 299792458 * 100,
+            float,
+            1,
+            200,
+            0.1
+        )
+        self.option_c.value_updated.connect(
+            lambda value: setattr( # type: ignore
+                medium, 'light_speed', value / 100 * 299792458
+            )
+        )
+
+        # Noise
+        self.option_noise = NumericInputWidget(
+            'Noise floor [dBm]',
+            medium.noise_floor_dbm,
+            float,
+            -1e3,
+            0,
+            10
+        )
+        self.option_noise.value_updated.connect(
+            lambda value: setattr(medium, 'noise_floor_dbm', value) # type: ignore
+        )
+
+        # Minimum SINR
+        self.option_sinr_thres = NumericInputWidget(
+            'SINR threshold [dB]',
+            medium.sinr_threshold_db,
+            float,
+            -50,
+            50,
+            10
+        )
+        self.option_sinr_thres.value_updated.connect(
+            lambda value: setattr(medium, 'sinr_threshold_db', value) # type: ignore
         )
 
         # Overview label
@@ -68,14 +122,16 @@ class MainWindow(QMainWindow):
 
         # Options layout
         options_layout = QVBoxLayout()
-        options_layout.addWidget(
-            self.options_label,
-            alignment=Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
+        options_layout.addWidget(self.options_label)
+        options_layout.addWidget(self.option_pathloss)
+        options_layout.addWidget(self.option_fading)
+        options_layout.addWidget(self.option_c)
+        options_layout.addWidget(self.option_noise)
+        options_layout.addWidget(self.option_sinr_thres)
+        options_layout.setAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
         )
-        options_layout.addWidget(
-            self.option_pathloss,
-            alignment=Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
-        )
+        options_layout.setSpacing(8)
         options_layout.addStretch()
 
         # Layout for the entire graph layout and the options menu
