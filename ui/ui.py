@@ -1,6 +1,6 @@
 from typing import Any
 import numpy as np
-from PySide6.QtCore import QTimer
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import (
     QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QLabel
@@ -9,6 +9,7 @@ import pyqtgraph as pg
 
 from medium import NodeStatus, Medium, Node2D, Messages
 
+from .input import NumericInputWidget
 from .thread import SimulationThread
 
 class MainWindow(QMainWindow):
@@ -44,6 +45,19 @@ class MainWindow(QMainWindow):
         # Options menu
         self.options_label = QLabel('Options')
 
+        # Path loss exponent option
+        self.option_pathloss = NumericInputWidget(
+            'Path loss exponent',
+            medium.path_loss_exp,
+            float,
+            2,
+            8,
+            0.1
+        )
+        self.option_pathloss.value_updated.connect(
+            lambda value: setattr(medium, 'path_loss_exp', value) # type: ignore
+        )
+
         # Overview label
         self.overview_label = QLabel()
 
@@ -52,10 +66,22 @@ class MainWindow(QMainWindow):
         graph_layout.addWidget(self.graph_medium)
         graph_layout.addWidget(self.overview_label)
 
+        # Options layout
+        options_layout = QVBoxLayout()
+        options_layout.addWidget(
+            self.options_label,
+            alignment=Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
+        )
+        options_layout.addWidget(
+            self.option_pathloss,
+            alignment=Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
+        )
+        options_layout.addStretch()
+
         # Layout for the entire graph layout and the options menu
         layout = QHBoxLayout()
         layout.addLayout(graph_layout)
-        layout.addWidget(self.options_label)
+        layout.addLayout(options_layout)
 
         # Main widget
         central_widget = QWidget()
