@@ -73,7 +73,7 @@ class MainWindow(QMainWindow):
 
         # Light speed
         self.option_c = NumericInputWidget(
-            'Light Speed [%]',
+            'Light speed [%]',
             medium.light_speed / 299792458 * 100,
             float,
             1,
