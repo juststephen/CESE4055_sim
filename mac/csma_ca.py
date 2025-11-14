@@ -5,7 +5,10 @@ from medium.interface import MACInterface, NodeStatus
 
 from .base import MAC
 
-HEADER_BYTES: int = 4
+# Define header parts
+DEST_ID_BYTES: int = 4
+SENDER_ID_BYTES: int = 4 # Assuming 4-byte IDs
+HEADER_BYTES: int = DEST_ID_BYTES + SENDER_ID_BYTES
 
 class MAC_CSMA_CA(MAC):
     """
@@ -61,24 +64,30 @@ class MAC_CSMA_CA(MAC):
             self._buffer_out.popleft()
         
         # Add the message with header to the buffer
-        self._buffer_out.append(address.to_bytes(HEADER_BYTES, signed=True) + data)
-
+        dest_b = address.to_bytes(DEST_ID_BYTES, signed=True)
+        sender_b = self.interface.id.to_bytes(SENDER_ID_BYTES, signed=True)
+        self._buffer_out.append(dest_b + sender_b + data)
+        
     def receive(self, data: bytes) -> None:
         # Return if data is not received correctly
         if (data == None or len(data) < HEADER_BYTES):
             return
 
         # Split header from content
-        header: bytes = data[:HEADER_BYTES]
+        dest_id_b: bytes = data[:DEST_ID_BYTES]
+        sender_id_b: bytes = data[DEST_ID_BYTES:HEADER_BYTES]
         content: bytes = data[HEADER_BYTES:]
 
+        # Parse header
+        dest_id: int = int.from_bytes(dest_id_b, signed=True)
+        sender_id: int = int.from_bytes(sender_id_b, signed=True)
+
         # Return if data is not intended for this node
-        data_id: int = int.from_bytes(header, signed=True)
-        if (data_id >= 0 and data_id != self.interface.id):
+        if (dest_id >= 0 and dest_id != self.interface.id):
             return
         
-        # Send content to next layer
-        self.interface.routing_receive(content)
+        # Send content AND sender_id to next layer
+        self.interface.routing_receive(content, sender_id)
 
     def tick(self, time: float) -> None:
         self.time = time

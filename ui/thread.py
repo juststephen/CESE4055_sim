@@ -17,7 +17,8 @@ class SimulationThread(QThread):
         medium: Medium[Node2D],
         *,
         step_size: float = 1e-7,
-        data_rate: float = 1e6
+        data_rate: float = 1e6,
+        simulation_time_limit: float = 30
     ):
         """
         Initialise simulation thread.
@@ -36,6 +37,7 @@ class SimulationThread(QThread):
         self._step_size = step_size
         self._data_rate = data_rate
         self._running: bool = True
+        self._simulation_time_limit = simulation_time_limit
 
     def run(self) -> None:
         """
@@ -47,6 +49,11 @@ class SimulationThread(QThread):
         
         while self._running:
             self.medium.step(self._step_size)
+            
+            if self._simulation_time_limit is not None and self.medium.time >= self._simulation_time_limit:
+                print(f"Simulation time limit of {self._simulation_time_limit}s reached.")
+                self._running = False
+                break
 
             # Occasionally generate traffic
             if np.random.rand() < self._step_size * self._data_rate / AVG_MSG_LEN:
@@ -68,8 +75,8 @@ class SimulationThread(QThread):
                 node.send(address, MSG.format(send=i, code=int(10 * np.random.rand()), dist=dist).encode())
 
             # Sleep to get SIMULATION_FPS steps per second
-            time.sleep(max(step - (time.time() - start_time), 0))
-            start_time += step
+            #time.sleep(max(step - (time.time() - start_time), 0))
+            #start_time += step
 
     def stop(self) -> None:
         """

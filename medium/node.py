@@ -129,8 +129,8 @@ class Node(Generic[M, TMAC, TRouting], MACInterface, RoutingInterface):
     def MAC_send(self, address: int, data: bytes) -> None:
         self.mac.send(address, data)
     
-    def routing_receive(self, data: bytes) -> None:
-        self.routing.receive(data)
+    def routing_receive(self, data: bytes, sender_id: int) -> None:
+        self.routing.receive(data, sender_id)
         
     def receive(
         self,
