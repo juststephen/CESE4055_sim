@@ -30,6 +30,7 @@ class RoutingFlooding(Routing):
         
         # Broadcast header + data
         header: bytes = target + sender + index
+        self._received[header] = self.time
         self.interface.MAC_send(-1, header + data)
 
     def receive(self, data: bytes, sender_id: int) -> None:
