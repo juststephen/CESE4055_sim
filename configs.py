@@ -11,6 +11,15 @@ EXPERIMENTS = {
         "ROUTING_TYPE": RoutingNone,
         "ROUTING_PARAM": {}
     },
+    'aloha_ui_show': {
+        "COORD_MAX": 1000,
+        "NODE_COUNT": 1024,
+        "THREAD_PARAM": {"step_size": 1e-7, "data_rate": 1e6, "fps_limit": True},
+        "MAC_TYPE": MACAloha,
+        "MAC_PARAM": {"bitrate": 2e7},
+        "ROUTING_TYPE": RoutingNone,
+        "ROUTING_PARAM": {}
+    },
     'csma_noroute': {
         "COORD_MAX": 500,
         "THREAD_PARAM": {"step_size": 1e-5, "data_rate": 1e4},
@@ -24,6 +33,15 @@ EXPERIMENTS = {
         "THREAD_PARAM": {"step_size": 1e-5, "data_rate": 1e3},
         "MAC_TYPE": MAC_CSMA_CA,
         "MAC_PARAM": {"bitrate": 2e6,"buf_len": 20,"difs": 3e-3,"n": 16,"cf": 1e-3},
+        "ROUTING_TYPE": RoutingFlooding,
+        "ROUTING_PARAM": {}
+    },
+    'csma_flooding_ui_show': {
+        "COORD_MAX": 100000,
+        "NODE_COUNT": 1024,
+        "THREAD_PARAM": {"step_size": 1e-5, "data_rate": 1e4, "fps_limit": True},
+        "MAC_TYPE": MAC_CSMA_CA,
+        "MAC_PARAM": {"bitrate": 2e6,"buf_len": 5,"difs": 1e-4,"n": 16,"cf": 4e-5},
         "ROUTING_TYPE": RoutingFlooding,
         "ROUTING_PARAM": {}
     },

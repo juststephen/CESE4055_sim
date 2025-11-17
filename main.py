@@ -17,7 +17,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--experiment', 
         type=str, 
-        default='aodv_test',  # <-- Set your default experiment here
+        default='csma_flooding_ui_show',  # <-- Set your default experiment here
         choices=EXPERIMENTS.keys(),
         help='The experiment configuration to run.'
     )
@@ -30,7 +30,7 @@ if __name__ == '__main__':
 
     m = Medium[Node2D]()
     nodes = []
-    for _ in range(50):
+    for _ in range(config.get("NODE_COUNT", 50)):
         x, y = np.random.uniform(-config["COORD_MAX"], config["COORD_MAX"], size=2)
         n = Node2D(
             x, y,
