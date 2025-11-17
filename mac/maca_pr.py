@@ -85,7 +85,7 @@ class MAC_MACA_PR(MAC):
         if data is None:
             return # Ignore collisions/noise
 
-        self.time = self.interface.time # Get current time
+        self.time = self.time # Get current time
         
         try:
             # --- 1. Parse Packet Header ---

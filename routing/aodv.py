@@ -82,7 +82,7 @@ class RoutingAODV(Routing):
         """
         Called by the application to send data to a final address.
         """
-        self.time = self.interface.time # Get current time
+        self.time = self.time # Get current time
         
         # Look for a valid route in our table
         route = self._get_valid_route(address)
@@ -106,7 +106,7 @@ class RoutingAODV(Routing):
         Called by the MAC layer when it receives ANY packet.
         We must parse the AODV header to know what to do.
         """
-        self.time = self.interface.time # Get current time
+        self.time = self.time # Get current time
         
         try:
             packet_type = AodvPacketType(data[0])
