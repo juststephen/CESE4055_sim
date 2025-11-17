@@ -79,6 +79,9 @@ class Medium(Generic[N]):
         self.noise_floor_dbm: float = -100
         self.sinr_threshold_db: float = 20
 
+        # Metrics tracking
+        self.collision_count: int = 0
+
     def add_node(self, node: N) -> None:
         """
         Add a node to the medium.
@@ -334,6 +337,12 @@ class Medium(Generic[N]):
         # Compute SINR
         interferers_dbm = [r.power_dbm for r in overlapping]
         sinr_db = self._compute_sinr_db(reception.power_dbm, interferers_dbm)
+        
+        # Track collision if SINR too low
+        if sinr_db < self.sinr_threshold_db and overlapping:
+            # Increment collision counter if exists
+            if hasattr(self, 'collision_count'):
+                self.collision_count += 1
 
         # The data is received if the SINR is above the threshold
         if sinr_db >= self.sinr_threshold_db:
