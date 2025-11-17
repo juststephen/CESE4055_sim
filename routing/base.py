@@ -33,7 +33,7 @@ class Routing():
         ...
 
     @abstractmethod
-    def receive(self, data: bytes) -> None:
+    def receive(self, data: bytes, sender_id: int) -> None:
         """
         Receive data from the MAC layer.
 
@@ -41,6 +41,8 @@ class Routing():
         ----------
         data: bytes
             The recieved data.
+        sender_id: int
+            The ID of the node that sent the packet (the 1-hop neighbor).
         """
         ...
 

@@ -2,7 +2,7 @@ from medium.interface import RoutingInterface
 
 from .base import Routing
 
-ID_BYTES: int = 3
+ID_BYTES: int = 4
 INDEX_BYTES: int = 2
 HEADER_BYTES: int = 2 * ID_BYTES + INDEX_BYTES
 INDEX_TIMEOUT: float = 1.0
@@ -33,7 +33,8 @@ class RoutingFlooding(Routing):
         self._received[header] = self.time
         self.interface.MAC_send(-1, header + data)
 
-    def receive(self, data: bytes) -> None:
+    def receive(self, data: bytes, sender_id: int) -> None:
+        # We ignore sender_id because the flooding header has the original sender
         # Return if data is not received correctly
         if (data == None or len(data) < HEADER_BYTES):
             return

@@ -13,8 +13,8 @@ class RoutingNone(Routing):
         # Ignore routing and just send the message
         self.interface.MAC_send(address, data)
 
-    def receive(self, data: bytes) -> None:
-        # No routing data to intercept
+    def receive(self, data: bytes, sender_id: int) -> None:
+        # No routing data to intercept, ignore sender_id
         self.interface.receive(data)
 
     def tick(self, time: float) -> None:

@@ -58,7 +58,7 @@ class MACInterface():
         ...
     
     @abstractmethod
-    def routing_receive(self, data: bytes) -> None:
+    def routing_receive(self, data: bytes, sender_id: int) -> None:
         """
         Invoke the routing layer to process received data.
 
@@ -66,6 +66,8 @@ class MACInterface():
         ----------
         data : bytes
             Receiving bytes.
+        sender_id : int
+            The ID of the node that sent the packet (the 1-hop neighbor).
         """
         ...
 
